@@ -61,13 +61,16 @@ Confirm it took effect rather than assuming. Run any command that emits a creden
 
 ## What it won't do
 
-It only sees output from shell commands that pass through the wrapper. A credential you paste into a chat turn by hand never touches it. One of the four credentials that prompted this package arrived exactly that way.
-
-The pattern list is necessary and demonstrably not sufficient. Every one of its rules was added after a real credential of a shape the previous list missed turned up in real output. A fifth vendor will do the same thing eventually. Treat the list as a maintenance commitment, not a finished perimeter.
-
-Exit code preservation relies on a `bash` feature. Under a POSIX `sh` that's not bash, commonly `dash` on Linux, the mechanism doesn't just degrade, it returns a wrong exit code that can be mistaken for the real one. On macOS `/bin/sh` is bash, so this doesn't appear there. If your framework invokes hook commands through a generic `/bin/sh`, verify this before relying on it.
-
-It fails open when the redactor is missing, as described above.
+- see anything that doesn't pass through the wrapper, so a credential you paste into a
+  chat turn by hand never touches it, which is how one of the four that prompted this
+  package arrived
+- be sufficient on its own, since every rule was added after a real credential of a
+  shape the previous list missed turned up in real output, so treat the list as a
+  maintenance commitment rather than a finished perimeter
+- preserve the exit code under a POSIX `sh` that isn't bash, commonly `dash` on Linux,
+  where it returns a wrong code rather than degrading visibly; on macOS `/bin/sh` is
+  bash so this doesn't appear there
+- keep protecting you when the redactor is missing, since it fails open
 
 ## How I tested it
 
@@ -92,4 +95,4 @@ Design decisions and what changed while building it: [docs/ADR.md](docs/ADR.md).
 
 ---
 
-This little tool is one of a handful I pulled out of my own day-to-day agent setup. I use them all myself, so when something breaks I usually notice fast. But if you spot something weird, or just want to ask how it works, open an issue. I read every one. More tools on my [GitHub profile](https://github.com/justin-rhee).
+This little tool is one of a handful I pulled out of my own day-to-day agent setup. I use them all myself, so when something breaks I usually notice fast. But if you run into any issues, or anything that looks off, open an issue. I read every one. More tools on my [GitHub profile](https://github.com/justin-rhee).
