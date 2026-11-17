@@ -13,13 +13,17 @@
 # project notes before assuming this is safe on a non-bash Linux runner.
 #
 # FAIL-OPEN BY DESIGN: if redactor.sh can't be found or isn't executable,
-# this hook allows the ORIGINAL command through completely unmodified — no
+# this hook lets the ORIGINAL command through completely unmodified — no
 # redaction pipe at all, not a degraded one. A missing/broken redactor means
 # zero redaction, silently, not an error. This favors "never break the
 # agent's Bash tool" over "never leak a credential". Read the project notes
 # before relying on this in a context where that trade-off matters, and
-# consider monitoring for this hook falling back to plain "allow" (no
+# consider monitoring for this hook printing nothing for a Bash command (no
 # updatedInput) as a signal that the redactor stopped being found.
+#
+# PERMISSIONS: this hook never emits permissionDecision. Every path either
+# prints nothing (pass-through) or prints only updatedInput, so Claude Code's
+# normal permission rules and prompts still decide whether the command runs.
 
 set -u
 
@@ -29,7 +33,6 @@ TOOL_NAME=$(printf '%s' "$INPUT" | python3 -c 'import json,sys;d=json.load(sys.s
 ORIG_CMD=$(printf '%s' "$INPUT" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d.get("tool_input",{}).get("command",""))' 2>/dev/null)
 
 if [ "$TOOL_NAME" != "Bash" ] || [ -z "$ORIG_CMD" ]; then
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
   exit 0
 fi
 
@@ -60,7 +63,6 @@ REDACTOR="${TRANSCRIPT_REDACTOR_PATH:-$SCRIPT_DIR/redactor.sh}"
 # Skip wrapping if the redactor script is missing (fail open, not closed —
 # don't break Bash). See the FAIL-OPEN note above: this is silent.
 if [ ! -x "$REDACTOR" ]; then
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
   exit 0
 fi
 
@@ -76,15 +78,13 @@ wrapped = "( " + orig + " ) 2>&1 | " + red + "; exit ${PIPESTATUS[0]}"
 print(json.dumps({
     "hookSpecificOutput": {
         "hookEventName": "PreToolUse",
-        "permissionDecision": "allow",
         "updatedInput": {"command": wrapped},
     }
 }))
 ' 2>/dev/null)
 
 if [ -z "$WRAPPED" ]; then
-  # Fallback if wrapping failed: allow original command unchanged rather than break Bash
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
+  # Fallback if wrapping failed: pass the original command through unchanged rather than break Bash
   exit 0
 fi
 

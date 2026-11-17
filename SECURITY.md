@@ -14,10 +14,7 @@ promise the code can't keep.
 
 ## Validation status
 
-<State plainly whether this tool's tests / red-team corpus have been RUN, and
-link the results. An unrun corpus is disclosed here, in the open. never hidden
-behind a "tested" claim. Disclosure does not transfer the duty; run it before
-you rely on it.>
+I have run the offline test suite. 52 assertions pass across 4 suites, with 0 failures. Run it with `./tests/run_tests.sh`. Every key in it is synthetic. The tests do not cover live Claude Code behavior: I have not run the hook inside Claude Code, so I have not confirmed how it handles a rewrite that carries no permission decision. They also do not cover real credentials, a red-team corpus of unseen secret formats, or shells other than bash (a POSIX sh such as dash breaks exit-code preservation).
 
 ## Reporting a vulnerability
 

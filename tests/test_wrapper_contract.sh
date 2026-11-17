@@ -14,7 +14,7 @@ echo "== redact-bash-output.sh JSON hook contract =="
 
 # --- non-Bash tool: passthrough, no wrapping ---
 resp=$(printf '%s' '{"tool_name":"Read","tool_input":{"file_path":"/tmp/x"}}' | "$WRAPPER")
-assert_contains "non-Bash tool_name -> plain allow" "$resp" '"permissionDecision":"allow"'
+assert_eq "non-Bash tool_name -> no output (normal permission flow)" "$resp" ""
 assert_not_contains "non-Bash tool_name -> no updatedInput" "$resp" "updatedInput"
 
 # --- empty command: passthrough ---
@@ -23,7 +23,7 @@ assert_not_contains "empty command -> no updatedInput" "$resp" "updatedInput"
 
 # --- malformed JSON: degrades to plain allow, does not crash ---
 resp=$(printf 'not json at all' | "$WRAPPER")
-assert_contains "malformed JSON -> plain allow (does not error out)" "$resp" '"permissionDecision":"allow"'
+assert_eq "malformed JSON -> no output (does not error out)" "$resp" ""
 
 # --- normal Bash command: gets wrapped, points at the sibling redactor.sh ---
 wrapped=$(wrapped_command_for "echo hi")
@@ -43,6 +43,15 @@ assert_not_contains "wrapper source contains no hardcoded /Users/... home path" 
 # --- TRANSCRIPT_REDACTOR_PATH override is honored ---
 wrapped_override=$(wrapped_command_for "echo hi" "TRANSCRIPT_REDACTOR_PATH=/bin/cat")
 assert_contains "override env var changes the redactor binary used" "$wrapped_override" "| /bin/cat;"
+
+# --- the hook must never grant permission, on any path ---
+rewrite_resp=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"echo hi"}}' | "$WRAPPER")
+assert_contains "rewrite path still returns updatedInput" "$rewrite_resp" "updatedInput"
+assert_not_contains "rewrite path has no permissionDecision" "$rewrite_resp" "permissionDecision"
+assert_not_contains "non-Bash path has no permissionDecision" "$resp" "permissionDecision"
+wrapper_source_all=$(cat "$WRAPPER")
+assert_not_contains "wrapper source never emits an allow decision" "$wrapper_source_all" '"permissionDecision": "allow"'
+assert_not_contains "wrapper source never emits a compact allow decision" "$wrapper_source_all" '"permissionDecision":"allow"'
 
 echo
 echo "== invocation as a script through a symlink (not sourced, not run in-place) =="

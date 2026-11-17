@@ -1,10 +1,11 @@
 #!/bin/bash
 # Pins the FAIL-OPEN behavior: when redactor.sh cannot be found or is not
 # executable, redact-bash-output.sh allows the ORIGINAL command through
-# completely unwrapped — no redaction pipe at all. This is the property most
+# completely unwrapped (the hook prints nothing, so the normal
+# permission flow applies), no redaction pipe at all. This is the property most
 # likely to fool someone (a missing/broken redactor looks identical to "no
-# credentials found" from the caller's side: both are a plain, unmodified
-# "allow"). This test exists so that a future change which flips this to
+# credentials found" from the caller's side: both leave the command unmodified).
+# This test exists so that a future change which flips this to
 # fail-closed (or to some silently-degraded third behavior) breaks a test
 # instead of shipping quietly.
 #
@@ -25,15 +26,15 @@ chmod +x "$WORKDIR/redact-bash-output.sh"
 # wrapper looks for by default simply does not exist here.
 
 resp_missing=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"echo hi"}}' | "$WORKDIR/redact-bash-output.sh")
-assert_eq "sibling redactor.sh absent -> exact fail-open JSON (no updatedInput)" \
-  "$resp_missing" '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
+assert_eq "sibling redactor.sh absent -> no output at all (no updatedInput, no decision)" \
+  "$resp_missing" ""
 
 # Same, but the file exists and is non-executable rather than absent.
 touch "$WORKDIR/redactor.sh"
 chmod -x "$WORKDIR/redactor.sh"
 resp_noexec=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"echo hi"}}' | "$WORKDIR/redact-bash-output.sh")
-assert_eq "sibling redactor.sh present but non-executable -> same fail-open JSON" \
-  "$resp_noexec" '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
+assert_eq "sibling redactor.sh present but non-executable -> same empty output" \
+  "$resp_noexec" ""
 rm -f "$WORKDIR/redactor.sh"
 
 # --- prove what fail-open ACTUALLY costs: run it end-to-end with a synthetic

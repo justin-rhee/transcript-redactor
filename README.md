@@ -46,7 +46,7 @@ The sibling [untrusted-read](https://github.com/justin-rhee/untrusted-read) fail
 
 ## How I tested it
 
-- 47 assertions across 4 suites, every key synthetic: `./tests/run_tests.sh`
+- 52 assertions across 4 suites, every key synthetic: `./tests/run_tests.sh`
 - disabling the fail-open guard turns 3 red, and reverting the symlink-safe path resolution turns 2 red
 - all 20 patterns matched before extraction and again after; design decisions are in [docs/ADR.md](docs/ADR.md)
 

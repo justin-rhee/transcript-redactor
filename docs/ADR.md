@@ -14,7 +14,7 @@ The fixture for the Slack bot-token pattern builds the string as `$(printf 'xox'
 
 ## It fails open, which I decided on deliberately after watching a strict guard get uninstalled
 
-If `redactor.sh` cannot be found or is not executable, the hook returns a plain allow and the original command runs completely unwrapped, no redaction pipe at all. From the caller's side that state is identical to "nothing in this command needed redacting." The alternative is a hook that can break the agent's shell tool the moment a path is wrong, and I'd rather a check fail silently than take down the tool it guards. The cost is real: nothing in the hook's own output distinguishes a working redactor from a missing one, so watch for a bare allow with no rewritten command as the signal that it stopped being found.
+If `redactor.sh` cannot be found or is not executable, the hook prints nothing and the original command runs completely unwrapped, no redaction pipe at all. From the caller's side that state is identical to "nothing in this command needed redacting." The alternative is a hook that can break the agent's shell tool the moment a path is wrong, and I'd rather a check fail silently than take down the tool it guards. The cost is real: nothing in the hook's own output distinguishes a working redactor from a missing one, so watch for empty hook output on a Bash command as the signal that it stopped being found.
 
 ## Making the path portable created a bug that the hardcoded version never had a chance to have
 
